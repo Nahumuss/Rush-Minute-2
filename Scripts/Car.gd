@@ -7,7 +7,8 @@ var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _ready():
 	pass
-	
+
+# Called on the car's initialization
 func init(tiles_pos : Array, direction : bool) -> void:
 	rng.randomize()
 	if direction:
@@ -21,6 +22,7 @@ func init(tiles_pos : Array, direction : bool) -> void:
 	fix_rotation()
 	draw_car()
 
+# Fixes the rotation of the car by the direction variable
 func fix_rotation() -> void:
 	for tile in get_children():
 		var last_rotation = tile.get_rotation_degrees()
@@ -29,13 +31,21 @@ func fix_rotation() -> void:
 		elif direction and last_rotation != 0:
 			tile.set_rotation(90)
 
+# Resets the position of the car's tiles
+func reset() -> void:
+	for tile in get_children():
+		tile.reset()
+
+# Sets the car's tiles as selected
 func set_selected(is_selected: bool):
 	for tile in self.get_children():
 		tile.set_selected(is_selected)
 
+# Triggers when clicking on the car (one of its tiles)
 func on_click(tile_clicked : Tile) -> void:
 	get_parent().on_click(self, tile_clicked)
 
+# Applies the texture to the car's tiles
 func draw_car() -> void:
 	var path : String = "res://Sprites/Cars/" + str(length) + "x1/"
 	var textures : Array = get_list_in_dir(path)
@@ -43,7 +53,8 @@ func draw_car() -> void:
 		var chosen = textures[rng.randi_range(0,len(textures) - 1)]
 		for i in range(length):
 			self.get_children()[i].apply_texture(path + chosen, i)
-	
+
+# Get a list of the file name's in a directory
 func get_list_in_dir(path) -> Array:
 	var files = []
 	var dir = Directory.new()
@@ -60,10 +71,12 @@ func get_list_in_dir(path) -> Array:
 	dir.list_dir_end()
 	return files
 
+# Moves the car's tiles forward or backward
 func move_tiles(is_forward : bool):
 	for tile in get_children():
 		tile.move(is_forward)
 
+# Returns true if the car is not blocked by other cars, otherwise false
 func can_move(is_forward : bool):
 	if is_forward:
 		var front : Tile = self.get_child(0)
@@ -72,6 +85,7 @@ func can_move(is_forward : bool):
 		var back : Tile = self.get_child(len(self.get_children()) - 1)
 		return !back.is_colliding(is_forward) and back.can_move(is_forward)
 
+# Moves the car forward of backward, calls the move_tiles function
 func move(is_forward : bool):
 	if can_move(is_forward):
 		move_tiles(is_forward)
