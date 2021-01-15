@@ -39,7 +39,6 @@ func reset() -> void:
 	for child in get_children():
 		if !(child is Sprite) and !(child is Timer):
 			remove_child(child)
-	generate_from_string(level)
 
 func get_random_level(levels):
 	return levels[rng.randi_range(0,len(levels))].split(' ')[1]
@@ -80,7 +79,10 @@ func _input(event):
 				selected_car.move(false)
 		if event.scancode == KEY_R:
 			reset()
-	
+			generate_from_string(level)
+		if event.scancode == KEY_B:
+			reset()
+			generate_tiles()
 			
 func get_random_number(min_val : int, max_val : int) -> int:
 	return rng.randi_range(min_val, max_val)
