@@ -4,6 +4,7 @@ class_name Board
 #The dimentions of the board
 const DIMENTIONS = Vector2(6,6)
 var rng : RandomNumberGenerator = RandomNumberGenerator.new()
+var level = ''
 #The car that was last clicked by the player
 var selected_car : Car = null
 
@@ -11,24 +12,14 @@ func _ready():
 	rng.randomize()
 	generate_tiles()
 
-#Generating the tiles randomly - for now
+#Generating the tiles
 func generate_tiles() -> void:
-#	add_car_auto([Vector2(0,0), Vector2(0,1)])
-#	add_car_auto([Vector2(1,0), Vector2(2,0)])
-#	add_car_auto([Vector2(0,2), Vector2(0,3)])
-#	add_car_auto([Vector2(1,2), Vector2(2,2)])
-#	add_car_auto([Vector2(3,1), Vector2(3,2)])
-#	add_car_auto([Vector2(4,1), Vector2(5,1)])
-#	add_car_auto([Vector2(0,4), Vector2(1,4)])
-#	add_car_auto([Vector2(0,5), Vector2(1,5)])
-#	add_car_auto([Vector2(2,3), Vector2(2,4)])
-#	add_car_auto([Vector2(2,5), Vector2(3,5), Vector2(4,5)])
-#	add_car_auto([Vector2(3,3), Vector2(4,3)])
-#	add_car_auto([Vector2(5,3), Vector2(5,4), Vector2(5,5)])
-#
-#	add_wall(Vector2(3,0))
-	generate_from_string('IBBxooIooLDDJAALooJoKEEMFFKooMGGHHHM')
-	
+	var text : String = load_text_file('res://Levels/levels.txt')
+	var levels : Array = text.split("\n")
+	level = get_random_level(levels)
+	generate_from_string(level)
+
+# Generating the tiles from a given string
 func generate_from_string(tiles) -> void:
 	var cars = {}
 	for x in range(len(tiles) / DIMENTIONS.y):
@@ -43,6 +34,15 @@ func generate_from_string(tiles) -> void:
 					cars[tile] = [Vector2(x,y)]
 	for key in cars.keys():
 		add_car_auto(cars[key])
+
+func reset() -> void:
+	for child in get_children():
+		if !(child is Sprite) and !(child is Timer):
+			remove_child(child)
+	generate_from_string(level)
+
+func get_random_level(levels):
+	return levels[rng.randi_range(0,len(levels))].split(' ')[1]
 
 #When clicking the car
 func on_click(car_clicked : Car, tile_clicked : Tile) -> void:
@@ -78,11 +78,14 @@ func _input(event):
 		if event.scancode == KEY_S or event.scancode == KEY_DOWN or event.scancode == KEY_A or event.scancode == KEY_LEFT:
 			if selected_car:
 				selected_car.move(false)
+		if event.scancode == KEY_R:
+			reset()
+	
 			
 func get_random_number(min_val : int, max_val : int) -> int:
 	return rng.randi_range(min_val, max_val)
 	
-func load_text_file(path):
+func load_text_file(path) -> String:
 	var f = File.new()
 	var err = f.open(path, File.READ)
 	if err != OK:
