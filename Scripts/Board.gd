@@ -32,12 +32,13 @@ func generate_from_string(tiles) -> void:
 			if tile != 'o':
 				if tile == 'x':
 					add_wall(Vector2(x,y))
-				elif cars.has(tile):
-					cars[tile].append(Vector2(x,y))
 				else:
-					cars[tile] = [Vector2(x,y)]
+					if cars.has(tile):
+						cars[tile].append(Vector2(x,y))
+					else:
+						cars[tile] = [Vector2(x,y)]
 	for key in cars.keys():
-		add_car_auto(cars[key])
+			add_car_auto(cars[key], key)
 
 # Removes all cars from the board
 func hard_reset() -> void:
@@ -70,15 +71,19 @@ func add_wall(pos : Vector2):
 	add_child(wall)
 
 # Adds a car and oriantate by the tiles given
-func add_car_auto(tiles_pos : Array):
+func add_car_auto(tiles_pos : Array, name : String = ''):
 	if len(tiles_pos) <= 1:
-		add_car(tiles_pos, false)
+		add_car(tiles_pos, false, name)
 	else:
-		add_car(tiles_pos, tiles_pos[1] - tiles_pos[0] == Vector2(1,0))
+		add_car(tiles_pos, tiles_pos[1] - tiles_pos[0] == Vector2(1,0), name)
 
 # Adds a car
-func add_car(tiles_pos : Array, rotated : bool):
-	var car : Car = preload("res://Prefabs/Car.tscn").instance()
+func add_car(tiles_pos : Array, rotated : bool, name : String = ''):
+	var car : Car = null
+	if name == 'A':
+		car = preload("res://Prefabs/RedCar.tscn").instance()
+	else:
+		car = preload("res://Prefabs/Car.tscn").instance()
 	car.init(tiles_pos, rotated)
 	add_child(car)
 
@@ -96,8 +101,12 @@ func _input(event):
 		if event.scancode == KEY_R:
 			soft_reset()
 		if event.scancode == KEY_B:
-			hard_reset()
-			generate_tiles()
+			start_new_level()
+
+# Starts a new level
+func start_new_level() -> void:
+	hard_reset()
+	generate_tiles()
 
 # Gets a random number
 func get_random_number(min_val : int, max_val : int) -> int:
@@ -113,3 +122,13 @@ func load_text_file(path) -> String:
 	var text = f.get_as_text()
 	f.close()
 	return text
+
+# Triggered when winning
+func win() -> void:
+	var popup : PopupDialog = get_node("WinMessage")
+	var popup_timer : Timer = popup.get_child(0)
+	popup_timer.connect('timeout', popup, 'hide')
+	popup_timer.connect('timeout', self, 'start_new_level')
+	popup_timer.set_wait_time(1)
+	popup_timer.start()
+	get_node("WinMessage").popup()

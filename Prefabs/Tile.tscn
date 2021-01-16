@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://Scripts/Tile.gd" type="Script" id=1]
-[ext_resource path="res://Prefabs/Sprite.gd" type="Script" id=2]
+[ext_resource path="res://Scripts/Sprite.gd" type="Script" id=2]
 [ext_resource path="res://Scripts/Area2D.gd" type="Script" id=3]
 [ext_resource path="res://Sprites/Cars/White-Square.jpg" type="Texture" id=4]
 

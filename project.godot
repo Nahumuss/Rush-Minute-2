@@ -19,6 +19,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Scripts/Car.gd"
 }, {
+"base": "Car",
+"class": "RedCar",
+"language": "GDScript",
+"path": "res://Scripts/RedCar.gd"
+}, {
 "base": "Node2D",
 "class": "Tile",
 "language": "GDScript",
@@ -32,6 +37,7 @@ _global_script_classes=[ {
 _global_script_class_icons={
 "Board": "",
 "Car": "",
+"RedCar": "",
 "Tile": "",
 "Wall": ""
 }
@@ -42,7 +48,7 @@ config/name="Rush Minute"
 run/main_scene="res://Game.tscn"
 boot_splash/image="res://Sprites/Board.png"
 config/icon="res://Sprites/icon.png"
-config/windows_native_icon="res://Sprites/Icon.ico"
+config/windows_native_icon="res://Sprites/Game.ico"
 
 [display]
 
