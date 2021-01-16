@@ -30,4 +30,6 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Timer" type="Timer" parent="WinMessage"]
+[node name="PopupTimer" type="Timer" parent="WinMessage"]
+one_shot = true
+autostart = true

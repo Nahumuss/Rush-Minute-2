@@ -43,7 +43,7 @@ func generate_from_string(tiles) -> void:
 # Removes all cars from the board
 func hard_reset() -> void:
 	for child in get_children():
-		if !(child is Sprite) and !(child is Timer):
+		if child is Car or child is Wall:
 			remove_child(child)
 
 # Returns the cars to their original position
@@ -132,3 +132,4 @@ func win() -> void:
 	popup_timer.set_wait_time(1)
 	popup_timer.start()
 	get_node("WinMessage").popup()
+	selected_car = null
