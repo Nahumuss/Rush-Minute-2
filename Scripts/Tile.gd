@@ -59,14 +59,14 @@ func on_click() -> void:
 func move(is_forward : bool) -> void:
 	var direction : Vector2 = forward_ray.cast_to - forward_ray.position if is_forward else backward_ray.cast_to - forward_ray.position
 	var new_pos : Vector2 = position + (direction).rotated(self.rotation) * 2
-	var border = 64 * get_tree().get_root().get_node("Board").DIMENTIONS
+	var border = 64 * get_tree().get_root().get_node("Game").get_node("Board").DIMENTIONS
 	self.position += (direction.rotated(self.rotation) / 33) * 64
 
 # Return's whether the tile can move or not by the board's size 
 func can_move(is_forward : bool) -> bool:
 	var direction : Vector2 = forward_ray.cast_to - forward_ray.position if is_forward else backward_ray.cast_to - forward_ray.position
 	var new_pos : Vector2 = position + (direction).rotated(self.rotation) * 2
-	var border = 64 * get_tree().get_root().get_node("Board").DIMENTIONS
+	var border = 64 * get_tree().get_root().get_node("Game").get_node("Board").DIMENTIONS
 	return new_pos.x > 0 and new_pos.x < border.x and new_pos.y > 0 and new_pos.y < border.y
 
 # Returns whether the car's rays are colliding with objects
@@ -75,3 +75,9 @@ func is_colliding(is_forward : bool):
 		return forward_ray.is_colliding() and forward_ray.get_collider() != self.get_child(0)
 	else:
 		return backward_ray.is_colliding() and backward_ray.get_collider() != self.get_child(0)
+		
+func get_tile_string_pos() -> int:
+	return 6 * (int(round(self.position.y) - 32)) / 64  + (int(round(self.position.x)) - 32) / 64
+	
+func _to_string():
+	return str(get_tile_board_pos()) 

@@ -13,8 +13,8 @@ var level = ''
 var selected_car : Car = null
 
 func _ready():
-	rng.randomize()
-	generate_tiles()
+	pass
+	
 
 # Generating the tiles
 func generate_tiles() -> void:
@@ -25,7 +25,8 @@ func generate_tiles() -> void:
 
 # Generating the tiles from a given string
 func generate_from_string(tiles) -> void:
-	var cars = {}
+	level = tiles
+	var cars_placement = {}
 	for x in range(len(tiles) / DIMENTIONS.y):
 		for y in range(len(tiles) / DIMENTIONS.x):
 			var tile = tiles[x + y * DIMENTIONS.x]
@@ -33,12 +34,50 @@ func generate_from_string(tiles) -> void:
 				if tile == 'x':
 					add_wall(Vector2(x,y))
 				else:
-					if cars.has(tile):
-						cars[tile].append(Vector2(x,y))
+					if cars_placement.has(tile):
+						cars_placement[tile].append(Vector2(x,y))
 					else:
-						cars[tile] = [Vector2(x,y)]
-	for key in cars.keys():
-			add_car_auto(cars[key], key)
+						cars_placement[tile] = [Vector2(x,y)]
+	for key in cars_placement.keys():
+		add_car_auto(cars_placement[key], key)
+			
+func update_board_from_string(tiles) -> void:
+	var changed_cars = []
+	for x in range(len(tiles) / DIMENTIONS.y):
+		for y in range(len(tiles) / DIMENTIONS.x):
+			var pos = x + y * DIMENTIONS.x
+			var new_tile = tiles[pos]
+			var old_tile = level[pos]
+			if new_tile != old_tile and new_tile != 'x' and old_tile != 'x':
+				if new_tile == 'o':
+					var current_car = find_car_by_name(old_tile)
+					remove_car_tile(current_car, pos)
+					changed_cars.append(current_car)
+				else:
+					var current_car : Car = find_car_by_name(new_tile)
+					current_car.add_tile(Vector2(x,y))
+					changed_cars.append(current_car)
+	level = tiles
+	refresh_cars(changed_cars)
+	
+func refresh_cars(cars):
+	for car in cars:
+		if car is Car:
+			car.draw_car()
+			car.fix_rotation()
+
+func remove_car_tile(car : Car, tile_pos : int) -> void:
+	for car_tile in car.get_tiles():
+		if car_tile.get_tile_string_pos() == tile_pos:
+			car.remove_child(car_tile)
+
+func find_car_by_name(name) -> Car:
+	for child in get_children():
+		if child is Car:
+			if name == child.color:
+				return child
+	print('Couldnt find car')
+	return null
 
 # Removes all cars from the board
 func hard_reset() -> void:
@@ -84,24 +123,8 @@ func add_car(tiles_pos : Array, rotated : bool, name : String = ''):
 		car = preload("res://Prefabs/RedCar.tscn").instance()
 	else:
 		car = preload("res://Prefabs/Car.tscn").instance()
-	car.init(tiles_pos, rotated)
+	car.init(tiles_pos, rotated, name)
 	add_child(car)
-
-# Triggered on a key input
-func _input(event):
-	var timer : Timer = get_child(1)
-	if event is InputEventKey and event.pressed and timer.time_left == 0:
-		timer.start()
-		if event.scancode == KEY_W or event.scancode == KEY_UP or event.scancode == KEY_D or event.scancode == KEY_RIGHT:
-			if selected_car:
-				selected_car.move(true)
-		if event.scancode == KEY_S or event.scancode == KEY_DOWN or event.scancode == KEY_A or event.scancode == KEY_LEFT:
-			if selected_car:
-				selected_car.move(false)
-		if event.scancode == KEY_R:
-			soft_reset()
-		if event.scancode == KEY_B:
-			start_new_level()
 
 # Starts a new level
 func start_new_level() -> void:
@@ -133,3 +156,12 @@ func win() -> void:
 	popup_timer.start()
 	get_node("WinMessage").popup()
 	selected_car = null
+
+func to_string():
+	var board_string = 'oooooooooooooooooooooooooooooooooooo'
+	for child in get_children():
+		if child is Car or child is Wall:
+			for tile in child.get_tiles():
+				board_string[tile.get_tile_string_pos()] = child.color
+	return board_string
+			

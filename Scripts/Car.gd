@@ -4,23 +4,35 @@ class_name Car
 var length = 0
 var direction : bool = false # Vertical if true
 var rng : RandomNumberGenerator = RandomNumberGenerator.new()
+var path
+var chosen_texture = null
+var tiles = []
+var color = ''
 
 func _ready():
 	pass
 
 # Called on the car's initialization
-func init(tiles_pos : Array, direction : bool) -> void:
+func init(tiles_pos : Array, direction : bool, color : String) -> void:
 	rng.randomize()
 	if direction:
 		tiles_pos.invert()
 	for tile_pos in tiles_pos:
-		var tile : Tile = load("res://Prefabs/Tile.tscn").instance()
-		tile.set_tile_board_pos(Vector2(tile_pos.x,tile_pos.y))
-		self.add_child(tile)
+		add_tile(tile_pos)
 	self.direction = direction
 	self.length = len(tiles_pos)
+	self.color = color
+	path = "res://Sprites/Cars/" + str(length) + "x1/"
+	var textures : Array = get_list_in_dir(path)
+	if len(textures) > 0:
+		chosen_texture = textures[rng.randi_range(0,len(textures) - 1)]
 	fix_rotation()
 	draw_car()
+
+func add_tile(tile_pos):
+	var tile : Tile = load("res://Prefabs/Tile.tscn").instance()
+	tile.set_tile_board_pos(Vector2(tile_pos))
+	self.add_child(tile)
 
 # Fixes the rotation of the car by the direction variable
 func fix_rotation() -> void:
@@ -29,7 +41,7 @@ func fix_rotation() -> void:
 		if direction and last_rotation != 90:
 			tile.set_rotation(deg2rad(90))
 		elif direction and last_rotation != 0:
-			tile.set_rotation(90)
+			tile.set_rotation(deg2rad(90))
 
 # Resets the position of the car's tiles
 func reset() -> void:
@@ -47,13 +59,20 @@ func on_click(tile_clicked : Tile) -> void:
 
 # Applies the texture to the car's tiles
 func draw_car() -> void:
-	var path : String = "res://Sprites/Cars/" + str(length) + "x1/"
-	var textures : Array = get_list_in_dir(path)
-	if len(textures) > 0:
-		var chosen = textures[rng.randi_range(0,len(textures) - 1)]
-		for i in range(length):
-			self.get_children()[i].apply_texture(path + chosen, i)
+	var children = get_children()
+	children.sort_custom(self, 'compare_placement')
+	var i = 0
+	for tile in children:
+		if i < length:
+			tile.apply_texture(path + chosen_texture, i)
+		i += 1
 
+func compare_placement(tile1, tile2):
+	if direction:
+		return tile1.get_tile_string_pos() > tile2.get_tile_string_pos()
+	else:
+		return tile1.get_tile_string_pos() < tile2.get_tile_string_pos()
+	
 # Get a list of the file name's in a directory
 func get_list_in_dir(path) -> Array:
 	var files = []
@@ -89,3 +108,6 @@ func can_move(is_forward : bool):
 func move(is_forward : bool):
 	if can_move(is_forward):
 		move_tiles(is_forward)
+
+func get_tiles():
+	return self.get_children()
