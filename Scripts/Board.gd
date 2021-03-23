@@ -41,7 +41,7 @@ func generate_from_string(tiles) -> void:
 	for key in cars_placement.keys():
 		add_car_auto(cars_placement[key], key)
 			
-func update_board_from_string(tiles) -> void:
+func update_board_from_string(tiles) -> String:
 	var changed_cars = []
 	for x in range(len(tiles) / DIMENTIONS.y):
 		for y in range(len(tiles) / DIMENTIONS.x):
@@ -51,25 +51,37 @@ func update_board_from_string(tiles) -> void:
 			if new_tile != old_tile and new_tile != 'x' and old_tile != 'x':
 				if new_tile == 'o':
 					var current_car = find_car_by_name(old_tile)
-					remove_car_tile(current_car, pos)
-					changed_cars.append(current_car)
+					if not current_car:
+						return 'err'
+					if remove_car_tile(current_car, pos) == 'err':
+						return 'err'
+					if not current_car in changed_cars:
+						changed_cars.append(current_car)
 				else:
 					var current_car : Car = find_car_by_name(new_tile)
+					if not current_car:
+						return 'err'
 					current_car.add_tile(Vector2(x,y))
+					if not current_car in changed_cars:
+						changed_cars.append(current_car)
 					changed_cars.append(current_car)
 	level = tiles
-	refresh_cars(changed_cars)
+	return refresh_cars(changed_cars)
 	
-func refresh_cars(cars):
+func refresh_cars(cars) -> String:
 	for car in cars:
 		if car is Car:
-			car.draw_car()
+			if car.draw_car() == 'err':
+				return 'err'
 			car.fix_rotation()
+	return 'ok'
 
-func remove_car_tile(car : Car, tile_pos : int) -> void:
+func remove_car_tile(car : Car, tile_pos : int) -> String:
 	for car_tile in car.get_tiles():
 		if car_tile.get_tile_string_pos() == tile_pos:
 			car.remove_child(car_tile)
+			return 'ok'
+	return 'err'
 
 func find_car_by_name(name) -> Car:
 	for child in get_children():
@@ -97,11 +109,12 @@ func get_random_level(levels):
 
 # Called when clicking the car
 func on_click(car_clicked : Car, tile_clicked : Tile) -> void:
-	if selected_car != car_clicked:
-		car_clicked.set_selected(true)
-		if selected_car:
-			selected_car.set_selected(false)
-		selected_car = car_clicked
+	if get_parent().on_click(self):
+		if selected_car != car_clicked:
+			car_clicked.set_selected(true)
+			if selected_car:
+				selected_car.set_selected(false)
+			selected_car = car_clicked
 
 # Adds a wall to the board
 func add_wall(pos : Vector2):
