@@ -5,7 +5,7 @@ func _ready():
 	._ready()
 
 # Applies the texture to the car's tiles
-func draw_car() -> void:
+func draw_car() -> String:
 	var path : String = "res://Sprites/Cars/Red/"
 	var textures : Array = get_list_in_dir(path)
 	var chosen_texture = null
@@ -16,8 +16,10 @@ func draw_car() -> void:
 	var i = 0
 	for tile in children:
 		if i < length:
-			tile.apply_texture(path + chosen_texture, i)
+			if tile.apply_texture(path + chosen_texture, i) == 'err':
+				return 'err'
 		i += 1
+	return 'ok'
 			
 # Moves the car forward of backward, calls the move_tiles function
 func move(is_forward : bool):
