@@ -25,12 +25,12 @@ func wait_for_start(args):
 		if len(level) == 37:
 			print(level)
 			break
-	
+
 	main_board = preload("res://Prefabs/Board.tscn").instance()
 	add_child(main_board)
 	main_board.scale = BOARD_SCALE
 	main_board.generate_from_string(level)
-	
+
 	enemy_board = preload("res://Prefabs/Board.tscn").instance()
 	add_child(enemy_board)
 	enemy_board.scale = Vector2(1,1) - BOARD_SCALE
@@ -43,8 +43,16 @@ func update_enemy_board(args):
 		if socket:
 			var new_board = socket.get_utf8_string(36)
 			print('New board = ' + new_board)
-			enemy_board.update_board_from_string(new_board)
-			
+			if enemy_board.update_board_from_string(new_board) == 'err':
+				print("ERROR")
+				enemy_board.hard_reset()
+				enemy_board.generate_from_string(new_board)
+
+func on_click(board : Board):
+	if board == main_board:
+		return true
+	return false
+
 # Triggered on a key input
 func _input(event):
 	if main_board:
@@ -62,6 +70,7 @@ func _input(event):
 						update_main_board()
 			if event.scancode == KEY_R:
 				main_board.soft_reset()
+				update_main_board()
 			
 func update_main_board():
 	var level = main_board.to_string()
