@@ -40,9 +40,11 @@ func set_selected(is_selected: bool):
 		sprite.modulate = Color(1,1,1)
 
 # Applies a texture to a tile, cropping the original car texture by its position
-func apply_texture(texture_file, part) -> void:
+func apply_texture(texture_file, part) -> String:
 	var sprite : Sprite = get_child(0).get_child(1)
 	var texture : Texture = load(texture_file)
+	if not texture:
+		return 'err'
 	var atlas = AtlasTexture.new()
 	atlas.set_atlas(texture)
 	var w = texture.get_width()
@@ -50,6 +52,7 @@ func apply_texture(texture_file, part) -> void:
 	sprite.set_texture(atlas)
 	var scale = Vector2(64.0 / atlas.region.size.x, 64.0 / atlas.region.size.x)
 	sprite.scale = scale
+	return 'ok'
 
 # Triggers when clicking on the tile
 func on_click() -> void:
