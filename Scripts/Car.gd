@@ -25,7 +25,10 @@ func init(tiles_pos : Array, direction : bool, color : String) -> void:
 	path = "res://Sprites/Cars/" + str(length) + "x1/"
 	var textures : Array = get_list_in_dir(path)
 	if len(textures) > 0:
-		chosen_texture = textures[rng.randi_range(0,len(textures) - 1)]
+		var spb : StreamPeerBuffer = StreamPeerBuffer.new()
+		spb.data_array = color.to_ascii()
+		var chosen_num = spb.get_16() % len(textures)
+		chosen_texture = textures[chosen_num]
 	fix_rotation()
 	draw_car()
 
@@ -58,14 +61,17 @@ func on_click(tile_clicked : Tile) -> void:
 	get_parent().on_click(self, tile_clicked)
 
 # Applies the texture to the car's tiles
-func draw_car() -> void:
+func draw_car() -> String:
 	var children = get_children()
 	children.sort_custom(self, 'compare_placement')
 	var i = 0
 	for tile in children:
 		if i < length:
-			tile.apply_texture(path + chosen_texture, i)
+			if not chosen_texture or tile.apply_texture(path + chosen_texture, i) == 'err':
+				print('Error rendering car: ' + color)
+				return 'err'
 		i += 1
+	return 'ok'
 
 func compare_placement(tile1, tile2):
 	if direction:
