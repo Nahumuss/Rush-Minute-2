@@ -49,22 +49,25 @@ func update_board_from_string(tiles) -> String:
 			var new_tile = tiles[pos]
 			var old_tile = level[pos]
 			if new_tile != old_tile and new_tile != 'x' and old_tile != 'x':
-				if new_tile == 'o':
-					var current_car = find_car_by_name(old_tile)
-					if not current_car:
-						return 'err'
-					if remove_car_tile(current_car, pos) == 'err':
-						return 'err'
-					if not current_car in changed_cars:
+				if new_tile == 'o' or old_tile == 'o':
+					if new_tile == 'o':
+						var current_car = find_car_by_name(old_tile)
+						if not current_car:
+							return 'err'
+						if remove_car_tile(current_car, pos) == 'err':
+							return 'err'
+						if not current_car in changed_cars:
+							changed_cars.append(current_car)
+					else:
+						var current_car : Car = find_car_by_name(new_tile)
+						if not current_car:
+							return 'err'
+						current_car.add_tile(Vector2(x,y))
+						if not current_car in changed_cars:
+							changed_cars.append(current_car)
 						changed_cars.append(current_car)
 				else:
-					var current_car : Car = find_car_by_name(new_tile)
-					if not current_car:
-						return 'err'
-					current_car.add_tile(Vector2(x,y))
-					if not current_car in changed_cars:
-						changed_cars.append(current_car)
-					changed_cars.append(current_car)
+					return 'err'
 	level = tiles
 	return refresh_cars(changed_cars)
 	
@@ -161,13 +164,12 @@ func load_text_file(path) -> String:
 
 # Triggered when winning
 func win() -> void:
-	var popup : PopupDialog = get_node("WinMessage")
+	var popup : PopupDialog = self.get_child(2)
 	var popup_timer : Timer = popup.get_child(0)
 	popup_timer.connect('timeout', popup, 'hide')
-	popup_timer.connect('timeout', self, 'start_new_level')
 	popup_timer.set_wait_time(1)
 	popup_timer.start()
-	get_node("WinMessage").popup()
+	get_child(2).popup()
 	selected_car = null
 
 func to_string():
