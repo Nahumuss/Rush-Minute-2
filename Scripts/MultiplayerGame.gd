@@ -19,10 +19,9 @@ func load_board():
 		pass #TODO
 
 func wait_for_start(args):
-	var level
 	while true:
-		level = socket.get_utf8_string(37)
-		if len(level) == 37:
+		level = socket.get_utf8_string(36)
+		if len(level) == 36:
 			print(level)
 			break
 
@@ -42,11 +41,18 @@ func update_enemy_board(args):
 	while true:
 		if socket:
 			var new_board = socket.get_utf8_string(36)
-			print('New board = ' + new_board)
-			if enemy_board.update_board_from_string(new_board) == 'err':
-				print("ERROR")
-				enemy_board.hard_reset()
-				enemy_board.generate_from_string(new_board)
+			if new_board == 'whyareyoutryingtocheat/readmycodebro':
+				main_board.win()
+				print('ez')
+			elif new_board == 'lmfaololyoulostthatonerealhardgonext':
+				enemy_board.win()
+				print('hard')
+			else:
+				print('New board = ' + new_board)
+				if enemy_board.update_board_from_string(new_board) == 'err':
+					print("ERROR")
+					enemy_board.hard_reset()
+					enemy_board.generate_from_string(new_board)
 
 func on_click(board : Board):
 	if board == main_board:
@@ -71,7 +77,7 @@ func _input(event):
 			if event.scancode == KEY_R:
 				main_board.soft_reset()
 				update_main_board()
-			
+
 func update_main_board():
 	var level = main_board.to_string()
 	socket.put_utf8_string(level)
