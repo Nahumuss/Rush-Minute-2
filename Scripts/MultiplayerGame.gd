@@ -39,7 +39,7 @@ func wait_for_start(args):
 
 func update_enemy_board(args):
 	while true:
-		if socket:
+		if socket.get_status() != StreamPeerTCP.STATUS_ERROR:
 			var new_board = socket.get_utf8_string(36)
 			if new_board == 'whyareyoutryingtocheat/readmycodebro':
 				main_board.win()
@@ -53,6 +53,8 @@ func update_enemy_board(args):
 					print("ERROR")
 					enemy_board.hard_reset()
 					enemy_board.generate_from_string(new_board)
+		else:
+			print("Disconnected")
 
 func on_click(board : Board):
 	if board == main_board:
@@ -80,4 +82,5 @@ func _input(event):
 
 func update_main_board():
 	var level = main_board.to_string()
+	main_board.level = level
 	socket.put_utf8_string(level)
