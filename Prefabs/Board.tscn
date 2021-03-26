@@ -21,10 +21,10 @@ one_shot = true
 autostart = true
 
 [node name="WinMessage" type="PopupDialog" parent="."]
-margin_left = 76.0
-margin_top = 73.0
-margin_right = 305.0
-margin_bottom = 245.0
+margin_left = 67.0
+margin_top = 137.428
+margin_right = 317.0
+margin_bottom = 237.428
 custom_styles/panel = SubResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
