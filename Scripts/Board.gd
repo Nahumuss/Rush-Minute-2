@@ -169,7 +169,8 @@ func win() -> void:
 	popup_timer.connect('timeout', popup, 'hide')
 	popup_timer.set_wait_time(1)
 	popup_timer.start()
-	get_child(2).popup()
+	popup.popup()
+	popup.set_as_toplevel(false)
 	selected_car = null
 
 func to_string():
