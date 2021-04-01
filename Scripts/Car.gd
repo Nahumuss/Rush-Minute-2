@@ -6,7 +6,6 @@ var direction : bool = false # Vertical if true
 var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 var path
 var chosen_texture = null
-var tiles = []
 var color = ''
 
 func _ready():
@@ -103,11 +102,13 @@ func move_tiles(is_forward : bool):
 
 # Returns true if the car is not blocked by other cars, otherwise false
 func can_move(is_forward : bool):
+	var children = get_children()
+	children.sort_custom(self, 'compare_placement')
 	if is_forward:
-		var front : Tile = self.get_child(0)
+		var front : Tile = children[0]
 		return !front.is_colliding(is_forward) and front.can_move(is_forward)
 	else:
-		var back : Tile = self.get_child(len(self.get_children()) - 1)
+		var back : Tile = children[len(children) - 1]
 		return !back.is_colliding(is_forward) and back.can_move(is_forward)
 
 # Moves the car forward of backward, calls the move_tiles function
