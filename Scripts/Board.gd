@@ -9,6 +9,7 @@ var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 # The current level string
 var level = ''
 
+
 # The car that was last clicked by the player
 var selected_car : Car = null
 
@@ -24,7 +25,7 @@ func generate_tiles() -> void:
 	generate_from_string(level)
 
 # Generating the tiles from a given string
-func generate_from_string(tiles) -> void:
+func generate_from_string(tiles = level) -> void:
 	level = tiles
 	var cars_placement = {}
 	for x in range(len(tiles) / DIMENTIONS.y):
@@ -41,13 +42,14 @@ func generate_from_string(tiles) -> void:
 	for key in cars_placement.keys():
 		add_car_auto(cars_placement[key], key)
 			
-func update_board_from_string(tiles) -> String:
+func update_board_from_string(tiles = level) -> String:
 	var changed_cars = []
+	var current_level = to_string()
 	for x in range(len(tiles) / DIMENTIONS.y):
 		for y in range(len(tiles) / DIMENTIONS.x):
 			var pos = x + y * DIMENTIONS.x
 			var new_tile = tiles[pos]
-			var old_tile = level[pos]
+			var old_tile = current_level[pos]
 			if new_tile != old_tile and new_tile != 'x' and old_tile != 'x':
 				if new_tile == 'o' or old_tile == 'o':
 					if new_tile == 'o':
@@ -74,6 +76,8 @@ func update_board_from_string(tiles) -> String:
 func refresh_cars(cars) -> String:
 	for car in cars:
 		if car is Car:
+			if car == selected_car:
+				car.set_selected(true)
 			if car.draw_car() == 'err':
 				return 'err'
 			car.fix_rotation()
@@ -173,7 +177,7 @@ func win() -> void:
 	popup.set_as_toplevel(false)
 	selected_car = null
 
-func to_string():
+func _to_string():
 	var board_string = 'oooooooooooooooooooooooooooooooooooo'
 	for child in get_children():
 		if child is Car or child is Wall:
