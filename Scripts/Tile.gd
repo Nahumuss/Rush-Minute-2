@@ -61,8 +61,6 @@ func on_click() -> void:
 # Moves the tile forward or backward
 func move(is_forward : bool) -> void:
 	var direction : Vector2 = forward_ray.cast_to - forward_ray.position if is_forward else backward_ray.cast_to - forward_ray.position
-	var new_pos : Vector2 = position + (direction).rotated(self.rotation) * 2
-	var border = 64 * get_tree().get_root().get_node("Game").get_node("Board").DIMENTIONS
 	self.position += (direction.rotated(self.rotation) / 33) * 64
 
 # Return's whether the tile can move or not by the board's size 
