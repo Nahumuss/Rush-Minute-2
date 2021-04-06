@@ -8,47 +8,115 @@ var enemy_board : Board = null
 var wait_thread : Thread = Thread.new()
 var update_thread : Thread = Thread.new()
 var undo_redo = UndoRedo.new()
+var closed = false
 
+export var websocket_url = "127.0.0.1"
+var _client = WebSocketClient.new()
 func _ready():
+#	_client.connect("connection_closed", self, "_closed")
+#	_client.connect("connection_error", self, "_closed")
+#	_client.connect("connection_established", self, "_connected")
+#	_client.connect("data_received", self, "_on_data")
+#	if _client.connect_to_url(websocket_url) != OK:
+#		print("Unable to connect")
+#		set_process(false)
+#	print('connecting')
+	var back_button = preload('res://Prefabs/BackButton.tscn').instance()
+	add_child(back_button)
 	load_board()
+
+#func _closed(was_clean = false):
+#	# was_clean will tell you if the disconnection was correctly notified
+#	# by the remote peer before closing the socket.
+#	print("Closed, clean: ", was_clean)
+#	set_process(false)
+#
+#func _connected(proto = ""):
+#	# This is called on connection, "proto" will be the selected WebSocket
+#	# sub-protocol (which is optional)
+#	main_board = preload("res://Prefabs/Board.tscn").instance()
+#	main_board.name = 'Board'
+#	add_child(main_board)
+#	main_board.scale = BOARD_SCALE
+#	main_board.position = Vector2((1 - BOARD_SCALE.x) * 64 * 6,0)
+#	main_board.generate_from_string("")
+#
+#	enemy_board = preload("res://Prefabs/Board.tscn").instance()
+#	enemy_board.name = 'EnemeyBoard'
+#	add_child(enemy_board)
+#	enemy_board.scale = Vector2(1,1) - BOARD_SCALE
+#	enemy_board.position = Vector2(0,BOARD_SCALE.x * 64 * 6)
+#	enemy_board.generate_from_string(level)
+#
+#func _on_data():
+#	var data = _client.get_peer(1).get_packet().get_string_from_utf8()
+#	if main_board.level == '':
+#		if len(data) == 36:
+#			main_board.generate_from_string(data)
+#			enemy_board.generate_from_string(data)
+#	else:
+#		if data == 'whyareyoutryingtocheat/readmycodebro':
+#			main_board.win(false)
+#			print('ez')
+#		elif data == 'lmfaololyoulostthatonerealhardgonext':
+#			enemy_board.win(false)
+#			print('hard')
+#		elif len(data) == 36:
+#			print('New board = ' + data)
+#			if enemy_board.update_board_from_string(data) == 'err':
+#				print("ERROR")
+#			enemy_board.hard_reset()
+#			enemy_board.generate_from_string(data)
+#
+#func _process(delta):
+#	# Call this in _process or _physics_process. Data transfer, and signals
+#	# emission will only happen when calling this function.
+#	_client.poll()
 
 func load_board():
 	socket = StreamPeerTCP.new()
 	if socket.connect_to_host("itaynh.ddns.net", 5635) == OK:
 		wait_thread.start(self, "wait_for_start")
 	else:
-		pass #TODO
+		socket.disconnect_from_host()
 
 func wait_for_start(args):
-	while true:
-		level = socket.get_utf8_string(36)
-		if len(level) == 36:
+	while not closed:
+		if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
+			print('Connected')
+			level = socket.get_utf8_string(36)
 			print(level)
-			break
+			if len(level) == 36:
+				print(level)
+				break
+	if closed:
+		print('closed')
+		return
 
 	main_board = preload("res://Prefabs/Board.tscn").instance()
 	main_board.name = 'Board'
 	add_child(main_board)
 	main_board.scale = BOARD_SCALE
+	main_board.position = Vector2((1 - BOARD_SCALE.x) * 64 * 6,0)
 	main_board.generate_from_string(level)
 
 	enemy_board = preload("res://Prefabs/Board.tscn").instance()
 	enemy_board.name = 'EnemeyBoard'
 	add_child(enemy_board)
 	enemy_board.scale = Vector2(1,1) - BOARD_SCALE
-	enemy_board.position = Vector2(BOARD_SCALE.x * 64 * 6,0)
+	enemy_board.position = Vector2(0, 64 * (4.5 - enemy_board.scale.y * 6))
 	enemy_board.generate_from_string(level)
 	update_thread.start(self, "update_enemy_board")
 
 func update_enemy_board(args):
-	while true:
-		if socket.get_status() != StreamPeerTCP.STATUS_ERROR:
+	while not closed:
+		if socket.get_status() != StreamPeerTCP.STATUS_ERROR and socket.is_connected_to_host():
 			var new_board = socket.get_utf8_string(36)
 			if new_board == 'whyareyoutryingtocheat/readmycodebro':
-				main_board.win()
+				main_board.win(false)
 				print('ez')
 			elif new_board == 'lmfaololyoulostthatonerealhardgonext':
-				enemy_board.win()
+				enemy_board.win(false)
 				print('hard')
 			elif len(new_board) == 36:
 				print('New board = ' + new_board)
@@ -58,11 +126,15 @@ func update_enemy_board(args):
 					enemy_board.generate_from_string(new_board)
 		else:
 			print("Disconnected")
+	print('closed')
 
 func on_click(board : Board):
-	if board == main_board:
-		return true
-	return false
+	return board == main_board
+	
+func close():
+	closed = true
+	socket.disconnect_from_host()
+	update_thread.wait_to_finish()
 
 # Triggered on a key input
 func _input(event):
