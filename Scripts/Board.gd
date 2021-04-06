@@ -167,12 +167,14 @@ func load_text_file(path) -> String:
 	return text
 
 # Triggered when winning
-func win() -> void:
-	var popup : PopupDialog = self.get_child(2)
+func win(restart : bool) -> void:
+	var popup : PopupDialog = self.get_node('WinMessage')
 	var popup_timer : Timer = popup.get_child(0)
 	popup_timer.connect('timeout', popup, 'hide')
-	popup_timer.set_wait_time(1)
+	if restart:
+		popup_timer.connect('timeout', self, 'start_new_level')
 	popup_timer.start()
+	popup.set_as_toplevel(true)
 	popup.popup()
 	popup.set_as_toplevel(false)
 	selected_car = null
