@@ -14,7 +14,7 @@ var level = ''
 var selected_car : Car = null
 
 func _ready():
-	pass
+	rng.randomize()
 	
 
 # Generating the tiles
