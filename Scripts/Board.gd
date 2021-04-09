@@ -41,7 +41,8 @@ func generate_from_string(tiles = level) -> void:
 						cars_placement[tile] = [Vector2(x,y)]
 	for key in cars_placement.keys():
 		add_car_auto(cars_placement[key], key)
-			
+
+
 func update_board_from_string(tiles = level) -> String:
 	var changed_cars = []
 	var current_level = to_string()
@@ -167,12 +168,11 @@ func load_text_file(path) -> String:
 	return text
 
 # Triggered when winning
-func win(restart : bool) -> void:
+func win() -> void:
 	var popup : PopupDialog = self.get_node('WinMessage')
 	var popup_timer : Timer = popup.get_child(0)
 	popup_timer.connect('timeout', popup, 'hide')
-	if restart:
-		popup_timer.connect('timeout', self, 'start_new_level')
+	popup_timer.connect('timeout', self.get_parent(), 'end_game')
 	popup_timer.start()
 	popup.set_as_toplevel(true)
 	popup.popup()
