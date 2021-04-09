@@ -1,7 +1,7 @@
 extends Node2D
 
 var BOARD_SCALE = Vector2(0.75, 0.75)
-var main_board = null
+var main_board : Board = null
 var undo_redo = UndoRedo.new()
 
 func _ready():
@@ -16,6 +16,9 @@ func _ready():
 	
 func on_click(var board):
 	return true
+	
+func end_game() -> void:
+	main_board.start_new_level()
 
 # Triggered on a key input
 func _input(event):
@@ -50,7 +53,7 @@ func _input(event):
 		elif event.scancode == KEY_Y and Input.is_key_pressed(KEY_CONTROL):
 			undo_redo.redo()
 	if str(main_board)[17] == 'A':
-		main_board.win(true)
+		main_board.win()
 		
 func close():
 	pass
