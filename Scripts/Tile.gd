@@ -35,7 +35,7 @@ func reset() -> void:
 func set_selected(is_selected: bool):
 	var sprite : Sprite = get_child(0).get_child(1)
 	if is_selected:
-		sprite.modulate = Color(0,0,1)
+		sprite.modulate = Color(0.3,0.3,1)
 	else:
 		sprite.modulate = Color(1,1,1)
 
