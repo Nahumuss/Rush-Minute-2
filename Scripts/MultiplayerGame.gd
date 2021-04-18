@@ -5,8 +5,7 @@ var socket : StreamPeerTCP = null
 var level : String = ''
 var main_board : Board = null
 var enemy_board : Board = null
-var enemy_name : String = ""
-var my_name : String = ""
+var enemy_name : RichTextLabel = RichTextLabel.new()
 var wait_thread : Thread = Thread.new()
 var wait_answer_thread : Thread = Thread.new()
 var update_thread : Thread = Thread.new()
@@ -15,13 +14,17 @@ var closed = false
 var random_match_button : Button = null
 var create_private_room : Button = null
 var join_private_room : Button = null 
+var username_edit : LineEdit = null
+var menu_buttons : YSort = null
+var stats : VBoxContainer = VBoxContainer.new()
 
 func _ready():
 	connect_to_server()
 	var back_button = preload('res://Prefabs/BackButton.tscn').instance()
-	random_match_button = get_node("Random")
-	create_private_room = get_node("CreatePrivate")
-	join_private_room = get_node("JoinPrivate")
+	random_match_button = get_node("MenuButtons/Random")
+	create_private_room = get_node("MenuButtons/Create/CreatePrivate")
+	join_private_room = get_node("MenuButtons/Join/JoinPrivate")
+	username_edit = get_node("MenuButtons/Username")
 	random_match_button.connect('pressed', self, 'join_random')
 	create_private_room.connect('pressed', self, 'create_private')
 	join_private_room.connect("pressed", self, 'join_private')
@@ -36,14 +39,17 @@ func connect_to_server():
 		socket.disconnect_from_host()
 
 func create_private():
+	on_choice()
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
 		socket.put_data('C;'.to_utf8())
 		
 func join_private():
+	on_choice()
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
-		socket.put_data(('P;' + get_node("JoinPrivate/PrivateID").text).to_utf8())
+		socket.put_data(('P;' + get_node("MenuButtons/Join/PrivateID").text).to_utf8())
 
 func join_random():
+	on_choice()
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
 		socket.put_data('R;'.to_utf8())
 
@@ -61,17 +67,15 @@ func wait_for_start(args):
 					infos += 1
 					level = content
 				elif prefix == 'N':
-					enemy_name = content
+					enemy_name.text = "Versing: " + content
 					infos += 1
 				elif prefix == 'C':
-					get_node("CreatePrivate/PrivateID").text = content
+					get_node("MenuButtons/Create/PrivateID").text = content
 	if closed:
 		print('closed')
 		return
 		
-	random_match_button.hide()
-	create_private_room.hide()
-	join_private_room.hide()
+	get_node("MenuButtons").hide()
 
 	main_board = preload("res://Prefabs/Board.tscn").instance()
 	main_board.name = 'Board'
@@ -86,7 +90,20 @@ func wait_for_start(args):
 	enemy_board.scale = Vector2(1,1) - BOARD_SCALE
 	enemy_board.position = Vector2(0, 64 * (4.5 - enemy_board.scale.y * 6))
 	enemy_board.generate_from_string(level)
+	
+	enemy_name.rect_min_size = Vector2(0,15)
+	stats.set_position(Vector2(2,25))
+	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 4, 64 * (4.5 - enemy_board.scale.y * 6) - 25))
+	stats.add_child(enemy_name)
+	add_child(stats)
+	
 	update_thread.start(self, "update_enemy_board")
+
+func on_choice() -> void:
+	print(username_edit.text)
+	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host() and username_edit.text != '':
+		print('lolfadiuoawshdf8yuw')
+		socket.put_data(('N;' + username_edit.text).to_utf8())
 
 func end_game() -> void:
 	close()
@@ -94,24 +111,31 @@ func end_game() -> void:
 
 func update_enemy_board(args):
 	while not closed:
+		if socket.get_status() == StreamPeerTCP.STATUS_ERROR:
+			print(socket.get_status())
+		if not socket.is_connected_to_host():
+			print(socket.is_connected_to_host())
 		if socket.get_status() != StreamPeerTCP.STATUS_ERROR and socket.is_connected_to_host():
-			var message = socket.get_utf8_string(socket.get_available_bytes()).split(';')
-			var prefix = message[0]
-			var content = ''
-			if message.size() == 2:
-				content = message[1]
-			if prefix == 'W':
-				main_board.win()
-			elif prefix == 'L':
-				enemy_board.win()
-			elif prefix == 'U':
-				print('New board = ' + content)
-				if enemy_board.update_board_from_string(content) == 'err':
-					print("ERROR")
-					enemy_board.hard_reset()
-					enemy_board.generate_from_string(content)
+			if socket.get_available_bytes() > 0:
+				var message = socket.get_utf8_string(socket.get_available_bytes()).split(';')
+				print(message)
+				var prefix = message[0]
+				var content = ''
+				if message.size() == 2:
+					content = message[1]
+				if prefix == 'W':
+					main_board.win()
+				elif prefix == 'L':
+					enemy_board.win()
+				elif prefix == 'U':
+					print('New board = ' + content)
+					if enemy_board.update_board_from_string(content) == 'err':
+						print("ERROR")
+						enemy_board.hard_reset()
+						enemy_board.generate_from_string(content)
 		else:
 			print("Disconnected")
+			break
 	print('closed')
 
 func on_click(board : Board):
@@ -160,4 +184,6 @@ func update_main_board():
 	send_main_board()
 
 func send_main_board():
+	print(socket.is_connected_to_host())
 	socket.put_data(('U;' + main_board.level).to_utf8())
+	print('meow')
