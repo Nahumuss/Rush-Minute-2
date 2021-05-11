@@ -17,6 +17,9 @@ var join_private_room : Button = null
 var username_edit : LineEdit = null
 var menu_buttons : YSort = null
 var stats : VBoxContainer = VBoxContainer.new()
+var moves_counter : RichTextLabel = RichTextLabel.new()
+var username = ""
+var moves = 0
 
 func _ready():
 	connect_to_server()
@@ -91,10 +94,13 @@ func wait_for_start(args):
 	enemy_board.position = Vector2(0, 64 * (4.5 - enemy_board.scale.y * 6))
 	enemy_board.generate_from_string(level)
 	
-	enemy_name.rect_min_size = Vector2(0,15)
-	stats.set_position(Vector2(2,25))
-	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 4, 64 * (4.5 - enemy_board.scale.y * 6) - 25))
+	enemy_name.rect_min_size = Vector2(0,40)
+	moves_counter.rect_min_size = Vector2(0,20)
+	moves_counter.text = "Moves: " + str(moves)
+	stats.set_position(Vector2(2,50))
+	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 4, 64 * (4.5 - enemy_board.scale.y * 6) - 50))
 	stats.add_child(enemy_name)
+	stats.add_child(moves_counter)
 	add_child(stats)
 	
 	update_thread.start(self, "update_enemy_board")
@@ -102,7 +108,7 @@ func wait_for_start(args):
 func on_choice() -> void:
 	print(username_edit.text)
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host() and username_edit.text != '':
-		print('lolfadiuoawshdf8yuw')
+		self.username = username_edit.text
 		socket.put_data(('N;' + username_edit.text).to_utf8())
 
 func end_game() -> void:
@@ -171,13 +177,18 @@ func _input(event):
 					undo_redo.add_do_property(main_board, 'level', main_board.level)
 					undo_redo.add_do_method(self, 'update_main_board')
 					undo_redo.commit_action()
+					moves += 1
 			if event.scancode == KEY_R:
 				main_board.soft_reset()
 				undo_redo.clear_history()
-			if event.scancode == KEY_Z and Input.is_key_pressed(KEY_CONTROL):
+				moves += 1
+			if event.scancode == KEY_Z and Input.is_key_pressed(KEY_CONTROL) and undo_redo.has_undo():
 				undo_redo.undo()
-			elif event.scancode == KEY_Y and Input.is_key_pressed(KEY_CONTROL):
+				moves += 1
+			elif event.scancode == KEY_Y and Input.is_key_pressed(KEY_CONTROL) and undo_redo.has_redo():
 				undo_redo.redo()
+				moves += 1
+	moves_counter.text = "Moves: " + str(moves)
 
 func update_main_board():
 	main_board.update_board_from_string(main_board.level)
