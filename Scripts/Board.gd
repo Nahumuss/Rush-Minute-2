@@ -8,6 +8,7 @@ var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 
 # The current level string
 var level = ''
+var min_moves = 0
 var level_start = ''
 
 # The car that was last clicked by the player
@@ -21,7 +22,11 @@ func _ready():
 func generate_tiles() -> void:
 	var text : String = load_text_file('res://Levels/levels.txt')
 	var levels : Array = text.split("\n")
-	level = get_random_level(levels)
+	var layout = get_random_level(levels)
+	level = layout[1]
+	min_moves = int(layout[0])
+	print(level)
+	print(min_moves)
 	generate_from_string(level)
 
 # Generating the tiles from a given string
@@ -113,7 +118,7 @@ func soft_reset() -> void:
 
 # Gets a random level form the levels list
 func get_random_level(levels):
-	return levels[get_random_number(0,len(levels))].split(' ')[1]
+	return levels[get_random_number(0,len(levels))].split(' ')
 
 # Called when clicking the car
 func on_click(car_clicked : Car, tile_clicked : Tile) -> void:
