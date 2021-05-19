@@ -96,7 +96,6 @@ func find_car_by_name(name) -> Car:
 		if child is Car:
 			if name == child.color:
 				return child
-	print('Couldnt find car')
 	return null
 
 # Removes all cars from the board
@@ -161,7 +160,6 @@ func load_text_file(path) -> String:
 	var f = File.new()
 	var err = f.open(path, File.READ)
 	if err != OK:
-		printerr("Could not open file, error code ", err)
 		return ""
 	var text = f.get_as_text()
 	f.close()
