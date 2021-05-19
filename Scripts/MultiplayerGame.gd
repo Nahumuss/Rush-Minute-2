@@ -114,9 +114,9 @@ func wait_for_start(args):
 	moves_counter_label.rect_min_size = Vector2(0,15)
 	moves_counter_label.text = "Moves: " + str(moves)
 	avarage_accuracy_label.rect_min_size = Vector2(0,30)
-	avarage_accuracy_label.text = "Accuracy: " + (str(done_moves / float(done_max_moves) * 100.0) + '%') if done_max_moves != 0 else 'NAN'
+	avarage_accuracy_label.text = "Accuracy: " + ((str(done_moves / float(done_max_moves) * 100.0) + '%') if done_max_moves != 0 else 'NAN')
 	winrate_label.rect_min_size = Vector2(0,30)
-	winrate_label.text = "Winrate: " + (str(wins / float(wins + loses) * 100.0) + '%') if wins + loses != 0 else 'NAN'
+	winrate_label.text = "Winrate: " + ((str(wins / float(wins + loses) * 100.0) + '%') if wins + loses != 0 else 'NAN')
 	stats.set_position(Vector2(2,50))
 	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 4, 64 * (4.5 - enemy_board.scale.y * 6) - 50))
 	stats.add_child(enemy_name)
