@@ -8,7 +8,7 @@ var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 
 # The current level string
 var level = ''
-
+var level_start = ''
 
 # The car that was last clicked by the player
 var selected_car : Car = null
@@ -26,6 +26,7 @@ func generate_tiles() -> void:
 
 # Generating the tiles from a given string
 func generate_from_string(tiles = level) -> void:
+	level_start = tiles
 	level = tiles
 	var cars_placement = {}
 	for x in range(len(tiles) / DIMENTIONS.y):
