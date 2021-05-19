@@ -23,9 +23,9 @@ var moves_counter_label : RichTextLabel = RichTextLabel.new()
 var avarage_accuracy_label : RichTextLabel = RichTextLabel.new()
 var winrate_label : RichTextLabel = RichTextLabel.new()
 var username = ""
-var max_moves = 0
+var min_moves = 0
 var moves = 0
-var done_max_moves = 0
+var done_min_moves = 0
 var done_moves = 0
 var wins = 0
 var loses = 0
@@ -83,7 +83,7 @@ func wait_for_start(args):
 					var board_infos = content.split('%')
 					infos += 1
 					level = board_infos[0]
-					max_moves = int(board_infos[1])
+					min_moves = int(board_infos[1])
 				elif prefix == 'N':
 					enemy_name.text = "Versing: " + content
 					infos += 1
@@ -114,7 +114,7 @@ func wait_for_start(args):
 	moves_counter_label.rect_min_size = Vector2(0,15)
 	moves_counter_label.text = "Moves: " + str(moves)
 	avarage_accuracy_label.rect_min_size = Vector2(0,30)
-	avarage_accuracy_label.text = "Accuracy: " + ((str(done_moves / float(done_max_moves) * 100.0) + '%') if done_max_moves != 0 else 'NAN')
+	avarage_accuracy_label.text = "Accuracy: " + ((str(done_min_moves / float(done_moves) * 100.0) + '%') if done_moves != 0 else 'NAN')
 	winrate_label.rect_min_size = Vector2(0,30)
 	winrate_label.text = "Winrate: " + ((str(wins / float(wins + loses) * 100.0) + '%') if wins + loses != 0 else 'NAN')
 	stats.set_position(Vector2(2,50))
@@ -135,7 +135,7 @@ func load_data() -> void:
 		username = config.get_value("user", "name", "")
 		wins = config.get_value("user", "wins", 0)
 		loses = config.get_value("user", "loses", 0)
-		done_max_moves = int(config.get_value("user", "max_moves", 0))
+		done_min_moves = int(config.get_value("user", "min_moves", 0))
 		done_moves = int(config.get_value("user", "done_moves", 0))
 
 func on_choice() -> void:
@@ -145,8 +145,6 @@ func on_choice() -> void:
 		config.set_value("user", "name", username_edit.text)
 
 func end_game() -> void:
-	config.set_value("user", "max_moves", done_max_moves + max_moves)
-	config.set_value("user", "done_moves", done_moves + moves)
 	close()
 	get_tree().change_scene("res://TitleScreen.tscn")
 
@@ -161,6 +159,8 @@ func update_enemy_board(args):
 					content = message[1]
 				if prefix == 'W':
 					config.set_value("user", "wins", wins + 1)
+					config.set_value("user", "min_moves", done_min_moves + min_moves)
+					config.set_value("user", "done_moves", done_moves + moves)
 					main_board.win()
 				elif prefix == 'L':
 					config.set_value("user", "loses", loses + 1)
@@ -208,7 +208,8 @@ func _input(event):
 					undo_redo.commit_action()
 					moves += 1
 			if event.scancode == KEY_R:
-				main_board.soft_reset()
+				main_board.hard_reset()
+				main_board.generate_from_string(main_board.level_start)
 				undo_redo.clear_history()
 				moves += 1
 			if event.scancode == KEY_Z and Input.is_key_pressed(KEY_CONTROL) and undo_redo.has_undo():
