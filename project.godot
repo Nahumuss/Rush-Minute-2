@@ -49,7 +49,7 @@ config/description="A ripoff of the rush hour game with multiplayer features"
 run/main_scene="res://TitleScreen.tscn"
 boot_splash/image="res://Sprites/Board.png"
 config/icon="res://Sprites/icon.png"
-config/windows_native_icon="res://Sprites/Game.ico"
+config/windows_native_icon="res://Sprites/icon.ico"
 
 [display]
 
