@@ -16,18 +16,32 @@ var create_private_room : Button = null
 var join_private_room : Button = null 
 var username_edit : LineEdit = null
 var menu_buttons : YSort = null
+
+var config : ConfigFile = ConfigFile.new()
 var stats : VBoxContainer = VBoxContainer.new()
-var moves_counter : RichTextLabel = RichTextLabel.new()
+var moves_counter_label : RichTextLabel = RichTextLabel.new()
+var avarage_accurecy_label : RichTextLabel = RichTextLabel.new()
+var winrate_label : RichTextLabel = RichTextLabel.new()
 var username = ""
+var max_moves = 0
 var moves = 0
+var done_max_moves = 0
+var done_moves = 0
+var wins = 0
+var loses = 0
+
+var config_path = "user://stats.cfg"
+var key = OS.get_unique_id()
 
 func _ready():
 	connect_to_server()
+	load_data()
 	var back_button = preload('res://Prefabs/BackButton.tscn').instance()
 	random_match_button = get_node("MenuButtons/Random")
 	create_private_room = get_node("MenuButtons/Create/CreatePrivate")
 	join_private_room = get_node("MenuButtons/Join/JoinPrivate")
 	username_edit = get_node("MenuButtons/Username")
+	username_edit.text = username
 	random_match_button.connect('pressed', self, 'join_random')
 	create_private_room.connect('pressed', self, 'create_private')
 	join_private_room.connect("pressed", self, 'join_private')
@@ -66,18 +80,20 @@ func wait_for_start(args):
 				print(message)
 				var prefix = message[0]
 				var content = message[1]
-				if prefix == 'U' and len(content) == 36:
+				if prefix == 'U' and len(content) == 39:
+					var board_infos = content.split('%')
 					infos += 1
-					level = content
+					level = board_infos[0]
+					max_moves = int(board_infos[1])
 				elif prefix == 'N':
 					enemy_name.text = "Versing: " + content
 					infos += 1
 				elif prefix == 'C':
 					get_node("MenuButtons/Create/PrivateID").text = content
 	if closed:
-		print('closed')
 		return
-		
+	
+	# Game starts
 	get_node("MenuButtons").hide()
 
 	main_board = preload("res://Prefabs/Board.tscn").instance()
@@ -94,24 +110,58 @@ func wait_for_start(args):
 	enemy_board.position = Vector2(0, 64 * (4.5 - enemy_board.scale.y * 6))
 	enemy_board.generate_from_string(level)
 	
-	enemy_name.rect_min_size = Vector2(0,40)
-	moves_counter.rect_min_size = Vector2(0,20)
-	moves_counter.text = "Moves: " + str(moves)
+	
+	enemy_name.rect_min_size = Vector2(0,30)
+	moves_counter_label.rect_min_size = Vector2(0,30)
+	moves_counter_label.text = "Moves: " + str(moves)
+	avarage_accurecy_label.rect_min_size = Vector2(0,30)
+	avarage_accurecy_label.text = "Avarage Accurecy: " + str(done_moves / float(done_max_moves)) if done_max_moves != 0 else 'NAN'
+	winrate_label.rect_min_size = Vector2(0,30)
+	winrate_label.text = "Winrate: " + str(wins / float(wins + loses)) if wins + loses != 0 else 'NAN'
 	stats.set_position(Vector2(2,50))
 	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 4, 64 * (4.5 - enemy_board.scale.y * 6) - 50))
 	stats.add_child(enemy_name)
-	stats.add_child(moves_counter)
+	stats.add_child(moves_counter_label)
+	stats.add_child(avarage_accurecy_label)
+	stats.add_child(winrate_label)
 	add_child(stats)
 	
 	update_thread.start(self, "update_enemy_board")
 
+func load_data() -> void:
+	config = ConfigFile.new()
+	var err = config.load_encrypted_pass(config_path, key)
+	print('err + ' + str(err))
+	if err == OK:
+		username = config.get_value("user", "name", "")
+		username = config.get_value("user", "name", "")
+		wins = config.get_value("user", "wins", 0)
+		loses = config.get_value("user", "loses", 0)
+		done_max_moves = int(config.get_value("user", "max_moves", 0))
+		done_moves = int(config.get_value("user", "done_moves", 0))
+	print(username)
+	print(wins)
+	print(loses)
+	print(done_max_moves)
+	print(done_moves)
+
 func on_choice() -> void:
-	print(username_edit.text)
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host() and username_edit.text != '':
 		self.username = username_edit.text
 		socket.put_data(('N;' + username_edit.text).to_utf8())
+		config.set_value("user", "name", username_edit.text)
 
 func end_game() -> void:
+	print('done_max_moves: ' + str(done_max_moves))
+	print('max_moves: ' + str(max_moves))
+	print('done_moves: ' + str(done_moves))
+	print('moves: ' + str(moves))
+	print(typeof(done_max_moves))
+	print(typeof(max_moves))
+	print(typeof(done_moves))
+	print(typeof(moves))
+	config.set_value("user", "max_moves", done_max_moves + max_moves)
+	config.set_value("user", "done_moves", done_moves + moves)
 	close()
 	get_tree().change_scene("res://TitleScreen.tscn")
 
@@ -130,8 +180,10 @@ func update_enemy_board(args):
 				if message.size() == 2:
 					content = message[1]
 				if prefix == 'W':
+					config.set_value("user", "wins", wins + 1)
 					main_board.win()
 				elif prefix == 'L':
+					config.set_value("user", "loses", loses + 1)
 					enemy_board.win()
 				elif prefix == 'U':
 					print('New board = ' + content)
@@ -148,6 +200,7 @@ func on_click(board : Board):
 	return board == main_board
 	
 func close():
+	config.save_encrypted_pass(config_path, key)
 	closed = true
 	socket.disconnect_from_host()
 
@@ -188,7 +241,7 @@ func _input(event):
 			elif event.scancode == KEY_Y and Input.is_key_pressed(KEY_CONTROL) and undo_redo.has_redo():
 				undo_redo.redo()
 				moves += 1
-	moves_counter.text = "Moves: " + str(moves)
+	moves_counter_label.text = "Moves: " + str(moves)
 
 func update_main_board():
 	main_board.update_board_from_string(main_board.level)
