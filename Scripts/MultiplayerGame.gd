@@ -114,15 +114,19 @@ func wait_for_start(args):
 	moves_counter_label.rect_min_size = Vector2(0,15)
 	moves_counter_label.text = "Moves: " + str(moves)
 	avarage_accuracy_label.rect_min_size = Vector2(0,30)
-	avarage_accuracy_label.text = "Accuracy: " + ((str(done_min_moves / float(done_moves) * 100.0) + '%') if done_moves != 0 else 'NAN')
+	avarage_accuracy_label.text = "Accuracy: " + ((str(stepify(done_min_moves / float(done_moves) * 100.0, 0.1)) + '%') if done_moves != 0 else 'NAN')
 	winrate_label.rect_min_size = Vector2(0,30)
-	winrate_label.text = "Winrate: " + ((str(wins / float(wins + loses) * 100.0) + '%') if wins + loses != 0 else 'NAN')
-	stats.set_position(Vector2(2,50))
-	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 4, 64 * (4.5 - enemy_board.scale.y * 6) - 50))
+	winrate_label.text = "Winrate: " + ((str(stepify(wins / float(wins + loses) * 100.0, 0.1)) + '%') if wins + loses != 0 else 'NAN')
+	stats.set_position(Vector2(4,50))
+	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 8, 64 * (4.5 - enemy_board.scale.y * 6) - 50))
 	stats.add_child(enemy_name)
 	stats.add_child(moves_counter_label)
 	stats.add_child(avarage_accuracy_label)
 	stats.add_child(winrate_label)
+	for child in stats.get_children():
+		var text = child.text
+		child.set_use_bbcode(true)
+		child.set_bbcode("[font=res://Fonts/statsfont.tres]"+text+"[/font]")
 	add_child(stats)
 	
 	update_thread.start(self, "update_enemy_board")
@@ -218,7 +222,7 @@ func _input(event):
 			elif event.scancode == KEY_Y and Input.is_key_pressed(KEY_CONTROL) and undo_redo.has_redo():
 				undo_redo.redo()
 				moves += 1
-	moves_counter_label.text = "Moves: " + str(moves)
+	moves_counter_label.set_bbcode("[font=res://Fonts/statsfont.tres]"+"Moves: " + str(moves)+"[/font]")
 
 func update_main_board():
 	main_board.update_board_from_string(main_board.level)
