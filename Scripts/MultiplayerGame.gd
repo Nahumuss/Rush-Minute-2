@@ -77,7 +77,6 @@ func wait_for_start(args):
 		if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
 			if socket.get_available_bytes() > 0:
 				var message = socket.get_utf8_string(socket.get_available_bytes()).split(';')
-				print(message)
 				var prefix = message[0]
 				var content = message[1]
 				if prefix == 'U' and len(content) == 39:
@@ -112,12 +111,12 @@ func wait_for_start(args):
 	
 	
 	enemy_name.rect_min_size = Vector2(0,30)
-	moves_counter_label.rect_min_size = Vector2(0,30)
+	moves_counter_label.rect_min_size = Vector2(0,15)
 	moves_counter_label.text = "Moves: " + str(moves)
 	avarage_accuracy_label.rect_min_size = Vector2(0,30)
-	avarage_accuracy_label.text = "Avarage Accuracy: " + str(done_moves / float(done_max_moves)) if done_max_moves != 0 else 'NAN'
+	avarage_accuracy_label.text = "Accuracy: " + (str(done_moves / float(done_max_moves) * 100.0) + '%') if done_max_moves != 0 else 'NAN'
 	winrate_label.rect_min_size = Vector2(0,30)
-	winrate_label.text = "Winrate: " + str(wins / float(wins + loses)) if wins + loses != 0 else 'NAN'
+	winrate_label.text = "Winrate: " + (str(wins / float(wins + loses) * 100.0) + '%') if wins + loses != 0 else 'NAN'
 	stats.set_position(Vector2(2,50))
 	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 4, 64 * (4.5 - enemy_board.scale.y * 6) - 50))
 	stats.add_child(enemy_name)
@@ -131,7 +130,6 @@ func wait_for_start(args):
 func load_data() -> void:
 	config = ConfigFile.new()
 	var err = config.load_encrypted_pass(config_path, key)
-	print('err + ' + str(err))
 	if err == OK:
 		username = config.get_value("user", "name", "")
 		username = config.get_value("user", "name", "")
@@ -139,11 +137,6 @@ func load_data() -> void:
 		loses = config.get_value("user", "loses", 0)
 		done_max_moves = int(config.get_value("user", "max_moves", 0))
 		done_moves = int(config.get_value("user", "done_moves", 0))
-	print(username)
-	print(wins)
-	print(loses)
-	print(done_max_moves)
-	print(done_moves)
 
 func on_choice() -> void:
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host() and username_edit.text != '':
@@ -152,14 +145,6 @@ func on_choice() -> void:
 		config.set_value("user", "name", username_edit.text)
 
 func end_game() -> void:
-	print('done_max_moves: ' + str(done_max_moves))
-	print('max_moves: ' + str(max_moves))
-	print('done_moves: ' + str(done_moves))
-	print('moves: ' + str(moves))
-	print(typeof(done_max_moves))
-	print(typeof(max_moves))
-	print(typeof(done_moves))
-	print(typeof(moves))
 	config.set_value("user", "max_moves", done_max_moves + max_moves)
 	config.set_value("user", "done_moves", done_moves + moves)
 	close()
@@ -167,14 +152,9 @@ func end_game() -> void:
 
 func update_enemy_board(args):
 	while not closed:
-		if socket.get_status() == StreamPeerTCP.STATUS_ERROR:
-			print(socket.get_status())
-		if not socket.is_connected_to_host():
-			print(socket.is_connected_to_host())
 		if socket.get_status() != StreamPeerTCP.STATUS_ERROR and socket.is_connected_to_host():
 			if socket.get_available_bytes() > 0:
 				var message = socket.get_utf8_string(socket.get_available_bytes()).split(';')
-				print(message)
 				var prefix = message[0]
 				var content = ''
 				if message.size() == 2:
@@ -186,15 +166,11 @@ func update_enemy_board(args):
 					config.set_value("user", "loses", loses + 1)
 					enemy_board.win()
 				elif prefix == 'U':
-					print('New board = ' + content)
 					if enemy_board.update_board_from_string(content) == 'err':
-						print("ERROR")
 						enemy_board.hard_reset()
 						enemy_board.generate_from_string(content)
 		else:
-			print("Disconnected")
 			break
-	print('closed')
 
 func on_click(board : Board):
 	return board == main_board
@@ -248,6 +224,4 @@ func update_main_board():
 	send_main_board()
 
 func send_main_board():
-	print(socket.is_connected_to_host())
 	socket.put_data(('U;' + main_board.level).to_utf8())
-	print('meow')
