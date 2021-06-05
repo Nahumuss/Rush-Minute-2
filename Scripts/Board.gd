@@ -48,7 +48,7 @@ func generate_from_string(tiles = level) -> void:
 	for key in cars_placement.keys():
 		add_car_auto(cars_placement[key], key)
 
-
+# Update the board visual from a string
 func update_board_from_string(tiles = level) -> String:
 	var changed_cars = []
 	var current_level = to_string()
@@ -79,7 +79,8 @@ func update_board_from_string(tiles = level) -> String:
 					return 'err'
 	level = tiles
 	return refresh_cars(changed_cars)
-	
+
+# Redraw the cars to fix issues
 func refresh_cars(cars) -> String:
 	for car in cars:
 		if car is Car:
@@ -90,6 +91,7 @@ func refresh_cars(cars) -> String:
 			car.fix_rotation()
 	return 'ok'
 
+# Remove a tile from a certain car
 func remove_car_tile(car : Car, tile_pos : int) -> String:
 	for car_tile in car.get_tiles():
 		if car_tile.get_tile_string_pos() == tile_pos:
@@ -97,6 +99,7 @@ func remove_car_tile(car : Car, tile_pos : int) -> String:
 			return 'ok'
 	return 'err'
 
+# Find a car's object by its letter
 func find_car_by_name(name) -> Car:
 	for child in get_children():
 		if child is Car:
@@ -183,6 +186,7 @@ func win() -> void:
 	popup.set_as_toplevel(false)
 	selected_car = null
 
+# 
 func _to_string():
 	var board_string = 'oooooooooooooooooooooooooooooooooooo'
 	for child in get_children():
