@@ -29,6 +29,7 @@ func _ready():
 	moves_counter_label.text = "Moves: " + str(moves)
 	avarage_accuracy_label.rect_min_size = Vector2(0,30)
 	avarage_accuracy_label.text = "Accuracy: " + ((str(stepify(done_min_moves / float(done_moves) * 100.0, 0.1)) + '%') if done_moves != 0 else 'NAN')
+	
 	stats.set_position(Vector2(4,50))
 	stats.set_size(Vector2((1 - BOARD_SCALE.x) * 64 * 6 - 8, 64 * 4.5 - 50))
 	stats.add_child(moves_counter_label)
@@ -39,6 +40,7 @@ func _ready():
 		child.set_bbcode("[font=res://Fonts/statsfont.tres]"+text+"[/font]")
 	add_child(stats)
 
+# Loads the player stats from the config file
 func load_data() -> void:
 	config = ConfigFile.new()
 	var err = config.load_encrypted_pass(config_path, key)
@@ -46,9 +48,11 @@ func load_data() -> void:
 		done_min_moves = int(config.get_value("user", "min_moves", 0))
 		done_moves = int(config.get_value("user", "done_moves", 0))
 
+# Returns whether the board you clicked is the main one, in this case it always is
 func on_click(var board):
 	return true
-	
+
+# Triggered on game's end, saves the data and update it
 func end_game() -> void:
 	config.set_value("user", "min_moves", done_min_moves + main_board.min_moves)
 	config.set_value("user", "done_moves", done_moves + moves)
@@ -100,9 +104,11 @@ func _input(event):
 		moves_counter_label.set_bbcode("[font=res://Fonts/statsfont.tres]"+ "Moves: " + str(moves)+"[/font]")
 	if str(main_board)[17] == 'A':
 		main_board.win()
-		
+
+# Triggered on window close / backing to the menu, saves the data
 func close():
 	config.save_encrypted_pass(config_path, key)
-		
+
+# Update main board's string
 func update_main_board():
 	main_board.update_board_from_string(main_board.level)
