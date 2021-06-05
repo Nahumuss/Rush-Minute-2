@@ -3,21 +3,20 @@ extends Node2D
 var BOARD_SCALE = Vector2(0.75, 0.75)
 var socket : StreamPeerTCP = null
 var level : String = ''
-var main_board : Board = null
-var enemy_board : Board = null
+var main_board : Board = null # The player's board
+var enemy_board : Board = null # The enemy's board
 var enemy_name : RichTextLabel = RichTextLabel.new()
-var wait_thread : Thread = Thread.new()
-var wait_answer_thread : Thread = Thread.new()
-var update_thread : Thread = Thread.new()
-var undo_redo = UndoRedo.new()
-var closed = false
+var wait_thread : Thread = Thread.new() # A thread for waiting for the game to start and listening
+var update_thread : Thread = Thread.new() # A thread for updating the board after game's start
+var undo_redo = UndoRedo.new() # An object monitoring the changes to the board's string in order to create the crtl+z and ctrl+y
+var closed = false # Whether the window is closed or opened
 var random_match_button : Button = null
 var create_private_room : Button = null
 var join_private_room : Button = null 
 var username_edit : LineEdit = null
 var menu_buttons : YSort = null
 
-var config : ConfigFile = ConfigFile.new()
+var config : ConfigFile = ConfigFile.new() # The config file object for reading and writing player data on the computer
 var stats : VBoxContainer = VBoxContainer.new()
 var moves_counter_label : RichTextLabel = RichTextLabel.new()
 var avarage_accuracy_label : RichTextLabel = RichTextLabel.new()
@@ -31,8 +30,9 @@ var wins = 0
 var loses = 0
 
 var config_path = "user://stats.cfg"
-var key = OS.get_unique_id()
+var key = OS.get_unique_id() # A unique id for the mechine that is used as the encryption key
 
+# Loads the screen initially
 func _ready():
 	connect_to_server()
 	load_data()
@@ -48,6 +48,7 @@ func _ready():
 	add_child(back_button)
 	wait_thread.start(self, "wait_for_start")
 
+# Connects to the server
 func connect_to_server():
 	socket = StreamPeerTCP.new()
 	if socket.connect_to_host('itaynh.ddns.net', 5635) == OK:
@@ -55,21 +56,25 @@ func connect_to_server():
 	else:
 		socket.disconnect_from_host()
 
+# Sends a request to create a private game
 func create_private():
 	on_choice()
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
 		socket.put_data('C;'.to_utf8())
-		
+
+# Sends a request to join a private lobby	
 func join_private():
 	on_choice()
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
 		socket.put_data(('P;' + get_node("MenuButtons/Join/PrivateID").text).to_utf8())
 
+# Sends a request to join the random lobby
 func join_random():
 	on_choice()
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host():
 		socket.put_data('R;'.to_utf8())
 
+# Waits for the game to start and initiate the board
 func wait_for_start(args):
 	var infos = 0
 	var sent = false
@@ -129,8 +134,9 @@ func wait_for_start(args):
 		child.set_bbcode("[font=res://Fonts/statsfont.tres]"+text+"[/font]")
 	add_child(stats)
 	
-	update_thread.start(self, "update_enemy_board")
+	update_thread.start(self, "listen_loop")
 
+# Loads the player stats from the file
 func load_data() -> void:
 	config = ConfigFile.new()
 	var err = config.load_encrypted_pass(config_path, key)
@@ -142,6 +148,7 @@ func load_data() -> void:
 		done_min_moves = int(config.get_value("user", "min_moves", 0))
 		done_moves = int(config.get_value("user", "done_moves", 0))
 
+# Triggered after clicked any button on the multiplayer menu, sends the username
 func on_choice() -> void:
 	if socket.get_status() == StreamPeerTCP.STATUS_CONNECTED and socket.is_connected_to_host() and username_edit.text != '':
 		self.username = username_edit.text
@@ -152,7 +159,8 @@ func end_game() -> void:
 	close()
 	get_tree().change_scene("res://TitleScreen.tscn")
 
-func update_enemy_board(args):
+# The main listen loop, waiting for the server to send board updates or game updates
+func listen_loop(args):
 	while not closed:
 		if socket.get_status() != StreamPeerTCP.STATUS_ERROR and socket.is_connected_to_host():
 			if socket.get_available_bytes() > 0:
@@ -166,6 +174,9 @@ func update_enemy_board(args):
 					config.set_value("user", "min_moves", done_min_moves + min_moves)
 					config.set_value("user", "done_moves", done_moves + moves)
 					main_board.win()
+				elif prefix == 'D':
+					config.set_value("user", "wins", wins + 1)
+					main_board.win()
 				elif prefix == 'L':
 					config.set_value("user", "loses", loses + 1)
 					enemy_board.win()
@@ -176,9 +187,11 @@ func update_enemy_board(args):
 		else:
 			break
 
+# Returns whether the board clicked is the main board or the enemie's
 func on_click(board : Board):
 	return board == main_board
-	
+
+# Trigged on window close / game end, saves the data
 func close():
 	config.save_encrypted_pass(config_path, key)
 	closed = true
@@ -224,9 +237,11 @@ func _input(event):
 				moves += 1
 	moves_counter_label.set_bbcode("[font=res://Fonts/statsfont.tres]"+"Moves: " + str(moves)+"[/font]")
 
+# Update the main board's string and sends it to the server
 func update_main_board():
 	main_board.update_board_from_string(main_board.level)
 	send_main_board()
 
+# Sends the updated board to the server
 func send_main_board():
 	socket.put_data(('U;' + main_board.level).to_utf8())
