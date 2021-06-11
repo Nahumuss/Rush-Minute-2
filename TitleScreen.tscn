@@ -49,3 +49,17 @@ script = ExtResource( 3 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+modulate = Color( 0.560784, 0.537255, 0.537255, 1 )
+margin_left = -2.0
+margin_top = 273.0
+margin_right = 380.0
+margin_bottom = 288.0
+bbcode_enabled = true
+bbcode_text = "[right][font=res://Fonts/statsfont.tres]Itay Nahum 2021[/font][/right]"
+text = "Itay Nahum 2021"
+scroll_active = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
