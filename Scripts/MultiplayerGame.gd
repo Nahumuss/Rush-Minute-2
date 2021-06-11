@@ -175,6 +175,7 @@ func listen_loop(args):
 					config.set_value("user", "done_moves", done_moves + moves)
 					main_board.win()
 				elif prefix == 'D':
+					print('hi')
 					config.set_value("user", "wins", wins + 1)
 					main_board.win()
 				elif prefix == 'L':
